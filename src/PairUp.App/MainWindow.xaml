@@ -7,6 +7,7 @@
         xmlns:audio="clr-namespace:PairUp.App.Audio"
         mc:Ignorable="d"
         Title="PairUp" Height="760" Width="1180" MinWidth="640" MinHeight="420"
+        Icon="app.ico"
         Background="{DynamicResource BgBrush}"
         FontFamily="Segoe UI"
         Foreground="{DynamicResource TextBrush}"
