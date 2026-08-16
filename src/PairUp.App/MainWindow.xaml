@@ -1,0 +1,412 @@
+<Window x:Class="PairUp.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PairUp.App"
+        xmlns:audio="clr-namespace:PairUp.App.Audio"
+        mc:Ignorable="d"
+        Title="PairUp" Height="760" Width="1180" MinWidth="640" MinHeight="420"
+        Background="{DynamicResource BgBrush}"
+        FontFamily="Segoe UI"
+        Foreground="{DynamicResource TextBrush}"
+        WindowStyle="None" ResizeMode="CanResize">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0,0,0,1"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <Style x:Key="CaptionButton" TargetType="Button">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#C0392B"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DeviceRow" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush2}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="4,14"/>
+        </Style>
+
+        <DataTemplate DataType="{x:Type audio:AudioDeviceInfo}">
+            <Border Style="{StaticResource DeviceRow}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="160"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="132"/>
+                        <ColumnDefinition Width="44"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Connected-state accent strip -->
+                    <Border Grid.Column="0" Width="3" CornerRadius="2" Margin="0,2,14,2">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+
+                    <Border Grid.Column="1" Width="36" Height="36" CornerRadius="9" Margin="0,0,12,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource AccentDimBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"
+                                   FontFamily="Segoe MDL2 Assets">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+                                    <Setter Property="Text" Value="&#xE9CE;"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Kind}" Value="Bluetooth">
+                                            <Setter Property="Text" Value="&#xE702;"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Kind}" Value="Wired">
+                                            <Setter Property="Text" Value="&#xE7F6;"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Kind}" Value="Speakers">
+                                            <Setter Property="Text" Value="&#xE767;"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock Text="{Binding Kind}" Style="{StaticResource EyebrowText}"/>
+                            <TextBlock Text=" · SYSTEM DEFAULT" Style="{StaticResource EyebrowText}"
+                                       Foreground="{DynamicResource Accent2Brush}"
+                                       Visibility="{Binding IsSystemDefault, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <CheckBox Grid.Column="3" IsChecked="{Binding IsConnected}" VerticalAlignment="Center"
+                              Margin="0,0,20,0" Style="{StaticResource ToggleSwitch}"/>
+
+                    <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="VOLUME" Style="{StaticResource EyebrowText}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Volume, StringFormat={}{0:0}%}" FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Grid>
+                        <Slider Minimum="0" Maximum="100" Value="{Binding Volume}" Margin="0,4,0,0"
+                                IsEnabled="{Binding IsConnected}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="5" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="DELAY" Style="{StaticResource EyebrowText}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding LatencyMs, StringFormat={}{0:0}ms}" FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Grid>
+                        <Slider Minimum="0" Maximum="300" Value="{Binding LatencyMs}" Margin="0,4,0,0"
+                                IsEnabled="{Binding IsConnected}"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="6" Style="{StaticResource PillBadgeSmall}">
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource PillText}">
+                                    <Setter Property="Text" Value="OFFLINE"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOutOfRange}" Value="True">
+                                            <Setter Property="Text" Value="OUT OF RANGE"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Text" Value="{Binding SyncStatusText}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+
+                    <Button Grid.Column="7" Style="{StaticResource StarToggleButton}" Margin="12,0,0,0"
+                            Click="FavoriteToggle_Click" ToolTip="Add to favorites"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+
+        <!-- Custom title bar -->
+        <Grid DockPanel.Dock="Top" Height="40" Background="{DynamicResource Surface2Brush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                <Border Width="24" Height="24" CornerRadius="7" Margin="0,0,10,0"
+                        Background="{DynamicResource LogoMarkBrush}">
+                    <Viewbox Width="15" Height="15">
+                        <Path Data="M3 12c2-4 4-6 5-6s2 8 4 8 2-10 4-10 3 8 5 8"
+                              Stroke="{DynamicResource LogoGlyphBrush}" StrokeThickness="2"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/>
+                    </Viewbox>
+                </Border>
+                <TextBlock Text="PAIRUP" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="13"
+                           Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button x:Name="CreditButton" Content="&#xE946;" Style="{StaticResource CaptionButton}"
+                        FontSize="13" Click="CreditButton_Click" ToolTip="About"/>
+                <Button Content="&#xE921;" Style="{StaticResource CaptionButton}" Click="Minimize_Click"/>
+                <Button x:Name="MaximizeButton" Content="&#xE922;" Style="{StaticResource CaptionButton}" Click="Maximize_Click"/>
+                <Button Content="&#xE8BB;" Style="{StaticResource CloseButton}" Click="Close_Click"/>
+            </StackPanel>
+
+            <Popup x:Name="CreditPopup" PlacementTarget="{Binding ElementName=CreditButton}"
+                   Placement="Bottom" HorizontalOffset="-190" VerticalOffset="4"
+                   StaysOpen="False" AllowsTransparency="True">
+                <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource BorderBrush2}"
+                        BorderThickness="1" CornerRadius="10" Padding="20" Width="230">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.35"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <TextBlock Text="BUILT BY" Style="{StaticResource EyebrowText}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Jamim Mehdi" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold"
+                                   FontSize="18" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,14"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Cursor="Hand"
+                                    Tag="https://in.linkedin.com/in/jamim-mehdi" MouseLeftButtonUp="CreditLink_Click">
+                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}" Width="22"/>
+                            <TextBlock Text="LinkedIn" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Cursor="Hand"
+                                    Tag="https://github.com/jamimmehdi" MouseLeftButtonUp="CreditLink_Click">
+                            <TextBlock Text="&#xE943;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}" Width="22"/>
+                            <TextBlock Text="GitHub" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Cursor="Hand"
+                                    Tag="https://www.facebook.com/jamim.mehdi" MouseLeftButtonUp="CreditLink_Click">
+                            <TextBlock Text="&#xE8C7;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}" Width="22"/>
+                            <TextBlock Text="Facebook" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Cursor="Hand"
+                                    Tag="https://www.instagram.com/_byte_bard_/" MouseLeftButtonUp="CreditLink_Click">
+                            <TextBlock Text="&#xE114;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}" Width="22"/>
+                            <TextBlock Text="Instagram" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Popup>
+        </Grid>
+
+        <!-- Master bar -->
+        <Border DockPanel.Dock="Top" MinHeight="150" ClipToBounds="True"
+                BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="0,0,0,1"
+                Background="{DynamicResource MasterBarBackgroundBrush}">
+            <Grid>
+                <!-- Fills the entire bar edge-to-edge, unlike the padded content below -->
+                <Canvas x:Name="VisualizerCanvas" IsHitTestVisible="False"/>
+
+                <Grid Margin="28,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="AUDIO SOURCE" Style="{StaticResource EyebrowText}"
+                               Foreground="{DynamicResource TextOnVisualizerBrush}" Margin="0,0,0,6"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Style="{StaticResource LiveDot}" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding SourceName}" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="25"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,24,0">
+                    <TextBlock Text="MUTE SOURCE" Style="{StaticResource EyebrowText}"
+                               Foreground="{DynamicResource TextOnVisualizerBrush}" Margin="0,0,0,6"/>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding IsSourceMuted}" VerticalAlignment="Center"
+                                  Style="{StaticResource ToggleSwitch}" Click="MuteSource_Click"/>
+                        <TextBlock VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="Live"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+                                    <Setter Property="Effect" Value="{DynamicResource SuccessGlow}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSourceMuted}" Value="True">
+                                            <Setter Property="Text" Value="Muted"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                            <Setter Property="Effect" Value="{DynamicResource DangerGlow}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,24,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="MASTER VOLUME" Style="{StaticResource EyebrowText}"
+                                   Foreground="{DynamicResource TextOnVisualizerBrush}"/>
+                        <TextBlock Grid.Column="1" Text="{Binding MasterVolume, StringFormat={}{0:0}%}" FontSize="12"
+                                   Foreground="{DynamicResource TextOnVisualizerBrush}"/>
+                    </Grid>
+                    <Slider Minimum="0" Maximum="100" Value="{Binding MasterVolume}" Margin="0,6,0,0"
+                            ValueChanged="MasterVolume_ValueChanged"/>
+                </StackPanel>
+
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource Surface2Brush}" Padding="20,12"
+                BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontSize="13"
+                           Foreground="{DynamicResource TextFaintBrush}" VerticalAlignment="Center"/>
+                <Button x:Name="CheckUpdateButton" Grid.Column="1" Content="CHECK FOR UPDATES"
+                        Click="CheckUpdate_Click" Style="{StaticResource SmallFlatButton}"
+                        Background="{DynamicResource Surface3Brush}" Foreground="{DynamicResource TextMutedBrush}"
+                        BorderBrush="{DynamicResource BorderBrush2}" Padding="10,5"
+                        FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="10.5"/>
+            </Grid>
+        </Border>
+
+        <!-- Device grid -->
+        <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <StackPanel Visibility="{Binding HasDefaultDevice, Converter={StaticResource BoolToVisibility}}"
+                            Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Default Device" FontSize="19" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <ContentControl Content="{Binding DefaultDevice}"/>
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}"
+                            Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource Accent2Brush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Favorites" FontSize="19" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding FavoriteDevices}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Output Devices" FontSize="19" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding ConnectedSummary}" FontSize="13.5"
+                                   Foreground="{DynamicResource TextFaintBrush}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Style="{StaticResource PillBadge}" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <TextBlock Text="SYNC LOCKED" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="11"
+                                   Foreground="{DynamicResource AccentBrush}"/>
+                    </Border>
+                    <Button Grid.Column="2" Content="REFRESH" Click="Refresh_Click" Style="{StaticResource SmallFlatButton}"
+                            Background="{DynamicResource Surface3Brush}" Foreground="{DynamicResource TextBrush}"
+                            BorderBrush="{DynamicResource BorderBrush2}" Padding="9,4"
+                            FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="11" VerticalAlignment="Center"/>
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding Devices}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+    </DockPanel>
+</Window>

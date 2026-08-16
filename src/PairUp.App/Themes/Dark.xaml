@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- PairUp control-room palette — dark -->
+    <SolidColorBrush x:Key="BgBrush" Color="#14120F"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#1C1915"/>
+    <SolidColorBrush x:Key="Surface2Brush" Color="#242019"/>
+    <SolidColorBrush x:Key="Surface3Brush" Color="#2C261E"/>
+    <SolidColorBrush x:Key="BorderBrush2" Color="#4A4033"/>
+    <SolidColorBrush x:Key="TextBrush" Color="#F3EDE1"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#A89C89"/>
+    <SolidColorBrush x:Key="TextFaintBrush" Color="#6F6455"/>
+    <SolidColorBrush x:Key="TextOnVisualizerBrush" Color="#D9D2C4"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#33E0C0"/>
+    <SolidColorBrush x:Key="AccentDimBrush" Color="#2633E0C0"/>
+    <SolidColorBrush x:Key="Accent2Brush" Color="#FFB648"/>
+    <SolidColorBrush x:Key="Accent2DimBrush" Color="#26FFB648"/>
+
+    <!-- Raw (non-brush) colors for code-behind consumers like the visualizer -->
+    <Color x:Key="AccentColor">#33E0C0</Color>
+    <Color x:Key="Accent2Color">#FFB648</Color>
+
+    <RadialGradientBrush x:Key="MasterBarBackgroundBrush" Center="0.12,0.0" RadiusX="0.4" RadiusY="1.2" GradientOrigin="0.12,0.0">
+        <GradientStop Color="#0A33E0C0" Offset="0"/>
+        <GradientStop Color="#14120F" Offset="1"/>
+    </RadialGradientBrush>
+
+    <LinearGradientBrush x:Key="LogoMarkBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#33E0C0" Offset="0"/>
+        <GradientStop Color="#1F9E86" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="LogoGlyphBrush" Color="#0C1512"/>
+
+</ResourceDictionary>

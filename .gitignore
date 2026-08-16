@@ -1,0 +1,18 @@
+# Build outputs
+bin/
+obj/
+*.user
+
+# Visual Studio / Rider
+.vs/
+.idea/
+
+# Downloaded driver installers (large binaries, not app source)
+drivers/
+
+# Publish output
+publish/
+
+# OS cruft
+Thumbs.db
+.DS_Store
