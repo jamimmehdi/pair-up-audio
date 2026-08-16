@@ -16,3 +16,6 @@ publish/
 # OS cruft
 Thumbs.db
 .DS_Store
+
+# Claude Code project settings
+.claude/
