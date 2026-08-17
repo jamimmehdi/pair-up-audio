@@ -137,7 +137,9 @@ public sealed class AudioEngine : IDisposable
     /// DeviceUnavailable: the device couldn't be opened (e.g. a Bluetooth device that's
     /// paired but out of range, or was unplugged since the last device list refresh).
     /// </summary>
-    public AddOutputResult TryAddOutput(string deviceId, double volumePercent = 75, double delayMs = 0)
+    public AddOutputResult TryAddOutput(
+        string deviceId, double volumePercent = 75, double delayMs = 0,
+        double bassBoostDb = 0, double trebleDb = 0, bool isMono = false)
     {
         EnsureCaptureStarted();
 
@@ -155,6 +157,9 @@ public sealed class AudioEngine : IDisposable
                 var device = enumerator.GetDevice(deviceId);
                 var channel = new OutputChannel(device, _capture.CaptureFormat!);
                 channel.SetDelay(delayMs);
+                channel.BassBoostDb = bassBoostDb;
+                channel.TrebleDb = trebleDb;
+                channel.IsMono = isMono;
                 _requestedVolumePercent[deviceId] = volumePercent;
                 channel.Volume = (float)(_masterVolumePercent / 100.0 * volumePercent / 100.0);
                 _channels[deviceId] = channel;
@@ -175,6 +180,33 @@ public sealed class AudioEngine : IDisposable
             if (_channels.Remove(deviceId, out var channel))
                 channel.Dispose();
             _requestedVolumePercent.Remove(deviceId);
+        }
+    }
+
+    public void SetBassBoost(string deviceId, double gainDb)
+    {
+        lock (_lock)
+        {
+            if (_channels.TryGetValue(deviceId, out var channel))
+                channel.BassBoostDb = gainDb;
+        }
+    }
+
+    public void SetTreble(string deviceId, double gainDb)
+    {
+        lock (_lock)
+        {
+            if (_channels.TryGetValue(deviceId, out var channel))
+                channel.TrebleDb = gainDb;
+        }
+    }
+
+    public void SetMono(string deviceId, bool isMono)
+    {
+        lock (_lock)
+        {
+            if (_channels.TryGetValue(deviceId, out var channel))
+                channel.IsMono = isMono;
         }
     }
 

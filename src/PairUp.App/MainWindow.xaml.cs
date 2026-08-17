@@ -14,7 +14,7 @@ namespace PairUp.App;
 
 public partial class MainWindow : Window
 {
-    public const string AppVersion = "0.2.0";
+    public const string AppVersion = "0.3.0";
 
     private readonly AudioDeviceManager _deviceManager = new();
     private readonly MainWindowViewModel _viewModel = new();
@@ -22,6 +22,13 @@ public partial class MainWindow : Window
     private readonly SettingsStore _settingsStore = new();
     private bool _isRestoringSettings;
     private LayeredWaveVisualizer? _visualizer;
+    private GuestServer? _guestServer;
+    private readonly ClickCalibrator _calibrator = new();
+    private AudioDeviceInfo? _calibratingDevice;
+    private const int CalibrationTapTarget = 5;
+    private TrayIconService? _tray;
+    private bool _hasShownTrayBalloon;
+    private bool _isExiting;
 
     public MainWindow()
     {
@@ -34,7 +41,21 @@ public partial class MainWindow : Window
             ApplyRoundedCorners();
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WndProc);
         };
-        Closed += (_, _) => { _visualizer?.Stop(); _audioEngine.Dispose(); };
+        Closed += (_, _) => { _visualizer?.Stop(); _audioEngine.Dispose(); _guestServer?.Dispose(); _calibrator.Dispose(); _tray?.Dispose(); };
+
+        _tray = new TrayIconService(
+            () => _viewModel.Devices,
+            device => device.IsConnected = !device.IsConnected,
+            RestoreFromTray,
+            ExitApp)
+        { Visible = true };
+
+        Closing += (_, e) =>
+        {
+            if (_isExiting) return;
+            e.Cancel = true;
+            WindowState = WindowState.Minimized;
+        };
         Loaded += (_, _) =>
         {
             // Start capture immediately so the visualizer has real audio to react to right away,
@@ -42,11 +63,48 @@ public partial class MainWindow : Window
             _audioEngine.EnsureCaptureStarted();
             _visualizer = new LayeredWaveVisualizer(VisualizerCanvas, _audioEngine);
             _visualizer.Start();
+
+            _guestServer = new GuestServer(() => _viewModel.Devices, Dispatcher);
+            try { _guestServer.Start(); }
+            catch { /* Guest sharing just won't be available; nothing else depends on it. */ }
         };
         _audioEngine.SyncStatusUpdated += AudioEngine_SyncStatusUpdated;
         _audioEngine.OsMasterVolumeChanged += OsMasterVolumeChanged;
         _audioEngine.OsMuteChanged += OsMuteChanged;
-        StateChanged += (_, _) => MaximizeButton.Content = WindowState == WindowState.Maximized ? "" : "";
+        StateChanged += (_, _) =>
+        {
+            MaximizeButton.Content = WindowState == WindowState.Maximized ? "" : "";
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide();
+                ShowInTaskbar = false;
+                if (!_hasShownTrayBalloon)
+                {
+                    _hasShownTrayBalloon = true;
+                    _tray?.ShowBalloon("PairUp", "Still running in the tray — double-click the icon to reopen, or right-click to toggle devices.");
+                }
+            }
+        };
+    }
+
+    private void RestoreFromTray()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            Show();
+            ShowInTaskbar = true;
+            WindowState = WindowState.Normal;
+            Activate();
+        });
+    }
+
+    private void ExitApp()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _isExiting = true;
+            Close();
+        });
     }
 
     private void AudioEngine_SyncStatusUpdated(IReadOnlyList<SyncStatus> statuses)
@@ -160,6 +218,9 @@ public partial class MainWindow : Window
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = installerPath,
+                    // Our Inno Setup installer relaunches PairUp itself once the silent
+                    // install finishes, so no manual "open it again" step is needed.
+                    Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS",
                     UseShellExecute = true
                 });
 
@@ -226,6 +287,9 @@ public partial class MainWindow : Window
                     device.Volume = saved.Volume;
                     device.LatencyMs = saved.LatencyMs;
                     device.IsFavorite = saved.IsFavorite;
+                    device.BassBoost = saved.BassBoost;
+                    device.Treble = saved.Treble;
+                    device.IsMono = saved.IsMono;
                     device.IsConnected = saved.IsConnected;
                 }
 
@@ -250,7 +314,8 @@ public partial class MainWindow : Window
     private void SaveSettings()
     {
         var settings = _viewModel.Devices.Select(d =>
-            new DeviceSettings(d.Id, d.IsConnected, d.Volume, d.LatencyMs, d.IsFavorite));
+            new DeviceSettings(d.Id, d.IsConnected, d.Volume, d.LatencyMs, d.IsFavorite,
+                d.BassBoost, d.Treble, d.IsMono));
         _settingsStore.Save(_viewModel.MasterVolume, settings);
     }
 
@@ -295,7 +360,9 @@ public partial class MainWindow : Window
             case nameof(AudioDeviceInfo.IsConnected):
                 if (device.IsConnected)
                 {
-                    var result = _audioEngine.TryAddOutput(device.Id, device.Volume, device.LatencyMs);
+                    var result = _audioEngine.TryAddOutput(
+                        device.Id, device.Volume, device.LatencyMs,
+                        device.BassBoost, device.Treble, device.IsMono);
 
                     if (result == AddOutputResult.WouldEcho)
                     {
@@ -338,6 +405,21 @@ public partial class MainWindow : Window
             case nameof(AudioDeviceInfo.IsFavorite):
                 RebuildFavorites();
                 break;
+
+            case nameof(AudioDeviceInfo.BassBoost):
+                _audioEngine.SetBassBoost(device.Id, device.BassBoost);
+                break;
+
+            case nameof(AudioDeviceInfo.Treble):
+                _audioEngine.SetTreble(device.Id, device.Treble);
+                break;
+
+            case nameof(AudioDeviceInfo.IsMono):
+                _audioEngine.SetMono(device.Id, device.IsMono);
+                break;
+
+            case nameof(AudioDeviceInfo.IsProcessingExpanded):
+                return; // UI-only, nothing to forward to the engine or save
         }
 
         if (!_isRestoringSettings)
@@ -372,6 +454,138 @@ public partial class MainWindow : Window
     {
         if (((Button)sender).DataContext is AudioDeviceInfo device)
             device.IsFavorite = !device.IsFavorite;
+    }
+
+    private void EqToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (((Button)sender).DataContext is AudioDeviceInfo device)
+            device.IsProcessingExpanded = !device.IsProcessingExpanded;
+    }
+
+    private void CalibrateToggle_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        if (button.DataContext is not AudioDeviceInfo device) return;
+
+        _calibrator.Stop();
+        _calibratingDevice = device;
+
+        CalibratePopup.PlacementTarget = button;
+        CalibrateDeviceName.Text = device.Name;
+        CalibrateNotEnoughText.Visibility = Visibility.Collapsed;
+        CalibrateIdlePanel.Visibility = Visibility.Visible;
+        CalibrateRunningPanel.Visibility = Visibility.Collapsed;
+        CalibrateDonePanel.Visibility = Visibility.Collapsed;
+
+        CalibratePopup.IsOpen = true;
+    }
+
+    private void CalibrateStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (_calibratingDevice is null) return;
+
+        try
+        {
+            using var enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+            var device = enumerator.GetDevice(_calibratingDevice.Id);
+            _calibrator.Start(device);
+        }
+        catch
+        {
+            CalibratePopup.IsOpen = false;
+            return;
+        }
+
+        CalibrateTapCountText.Text = $"0 of {CalibrationTapTarget} taps";
+        CalibrateNotEnoughText.Visibility = Visibility.Collapsed;
+        CalibrateIdlePanel.Visibility = Visibility.Collapsed;
+        CalibrateDonePanel.Visibility = Visibility.Collapsed;
+        CalibrateRunningPanel.Visibility = Visibility.Visible;
+    }
+
+    private void CalibrateTap_Click(object sender, RoutedEventArgs e)
+    {
+        _calibrator.RecordTap();
+        CalibrateTapCountText.Text = $"{_calibrator.TapCount} of {CalibrationTapTarget} taps";
+
+        if (_calibrator.TapCount < CalibrationTapTarget) return;
+
+        var estimate = _calibrator.GetEstimatedDelayMs();
+        _calibrator.Stop();
+        CalibrateRunningPanel.Visibility = Visibility.Collapsed;
+
+        if (estimate is double ms)
+        {
+            CalibrateResultText.Text = $"{ms:0}ms";
+            CalibrateDonePanel.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            CalibrateNotEnoughText.Visibility = Visibility.Visible;
+            CalibrateIdlePanel.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void CalibrateCancel_Click(object sender, RoutedEventArgs e)
+    {
+        _calibrator.Stop();
+        CalibratePopup.IsOpen = false;
+    }
+
+    private void CalibrateApply_Click(object sender, RoutedEventArgs e)
+    {
+        if (_calibratingDevice is not null)
+        {
+            var estimate = _calibrator.GetEstimatedDelayMs();
+            if (estimate is double ms)
+                _calibratingDevice.LatencyMs = ms;
+        }
+
+        _calibrator.Stop();
+        CalibratePopup.IsOpen = false;
+    }
+
+    private void CalibratePopup_Closed(object sender, EventArgs e)
+    {
+        _calibrator.Stop();
+        _calibratingDevice = null;
+    }
+
+    private void ShareToggle_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        if (button.DataContext is not AudioDeviceInfo device) return;
+
+        GuestSharePopup.PlacementTarget = button;
+        GuestShareDeviceName.Text = device.Name;
+
+        if (_guestServer is not { IsRunning: true } server)
+        {
+            GuestShareUnavailableText.Visibility = Visibility.Visible;
+            GuestShareQrImage.Source = null;
+            GuestSharePinText.Text = "------";
+        }
+        else
+        {
+            GuestShareUnavailableText.Visibility = Visibility.Collapsed;
+            var link = server.GetLinkForDevice(device.Id);
+            GuestShareQrImage.Source = PngBytesToImage(server.GetQrPng(link));
+            GuestSharePinText.Text = server.Pin;
+        }
+
+        GuestSharePopup.IsOpen = true;
+    }
+
+    private static System.Windows.Media.Imaging.BitmapImage PngBytesToImage(byte[] png)
+    {
+        var image = new System.Windows.Media.Imaging.BitmapImage();
+        using var stream = new System.IO.MemoryStream(png);
+        image.BeginInit();
+        image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        image.StreamSource = stream;
+        image.EndInit();
+        image.Freeze();
+        return image;
     }
 }
 

@@ -11,6 +11,7 @@ namespace PairUp.App.Audio;
 public sealed class OutputChannel : IDisposable
 {
     private readonly BufferedWaveProvider _buffer;
+    private readonly DeviceProcessingSampleProvider _processingProvider;
     private readonly VolumeSampleProvider _volumeProvider;
     private readonly WasapiOut _output;
     private readonly WaveFormat _sourceFormat;
@@ -40,7 +41,8 @@ public sealed class OutputChannel : IDisposable
         if (sourceFormat.SampleRate != device.AudioClient.MixFormat.SampleRate)
             sampleChain = new WdlResamplingSampleProvider(sampleChain, device.AudioClient.MixFormat.SampleRate);
 
-        _volumeProvider = new VolumeSampleProvider(sampleChain) { Volume = 0.75f };
+        _processingProvider = new DeviceProcessingSampleProvider(sampleChain);
+        _volumeProvider = new VolumeSampleProvider(_processingProvider) { Volume = 0.75f };
 
         _output = new WasapiOut(device, AudioClientShareMode.Shared, true, 100);
         _output.Init(_volumeProvider);
@@ -53,6 +55,27 @@ public sealed class OutputChannel : IDisposable
     {
         get => _volumeProvider.Volume;
         set => _volumeProvider.Volume = Math.Clamp(value, 0f, 1f);
+    }
+
+    /// <summary>Low-shelf gain in dB, roughly -12..+12, for small speakers that need more bass.</summary>
+    public double BassBoostDb
+    {
+        get => _processingProvider.BassGainDb;
+        set => _processingProvider.BassGainDb = value;
+    }
+
+    /// <summary>High-shelf gain in dB, roughly -12..+12, to tame harsh/tinny earbuds.</summary>
+    public double TrebleDb
+    {
+        get => _processingProvider.TrebleGainDb;
+        set => _processingProvider.TrebleGainDb = value;
+    }
+
+    /// <summary>Sums stereo down to identical L/R so single-earbud devices don't lose panned content.</summary>
+    public bool IsMono
+    {
+        get => _processingProvider.MonoDownmix;
+        set => _processingProvider.MonoDownmix = value;
     }
 
     /// <summary>

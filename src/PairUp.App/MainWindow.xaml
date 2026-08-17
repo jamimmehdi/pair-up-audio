@@ -59,6 +59,7 @@
 
         <DataTemplate DataType="{x:Type audio:AudioDeviceInfo}">
             <Border Style="{StaticResource DeviceRow}">
+                <StackPanel>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="4"/>
@@ -68,6 +69,9 @@
                         <ColumnDefinition Width="180"/>
                         <ColumnDefinition Width="180"/>
                         <ColumnDefinition Width="132"/>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="40"/>
                         <ColumnDefinition Width="44"/>
                     </Grid.ColumnDefinitions>
 
@@ -180,9 +184,120 @@
                         </TextBlock>
                     </Border>
 
-                    <Button Grid.Column="7" Style="{StaticResource StarToggleButton}" Margin="12,0,0,0"
+                    <Button Grid.Column="7" Style="{StaticResource IconToggleButton}"
+                            Click="EqToggle_Click" ToolTip="Audio processing (EQ, mono)">
+                        <TextBlock Text="&#xE9E9;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextOnVisualizerBrush}"/>
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsProcessingExpanded}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Button>
+
+                    <Button Grid.Column="8" Style="{StaticResource IconToggleButton}"
+                            Click="ShareToggle_Click" ToolTip="Let a guest control this device's volume from their phone"
+                            IsEnabled="{Binding IsConnected}">
+                        <TextBlock Text="&#xE72D;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource TextOnVisualizerBrush}" Opacity="0.7"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+
+                    <Button Grid.Column="9" Style="{StaticResource IconToggleButton}"
+                            Click="CalibrateToggle_Click" ToolTip="Calibrate sync delay by ear"
+                            IsEnabled="{Binding IsConnected}">
+                        <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="{DynamicResource TextOnVisualizerBrush}" Opacity="0.7"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+
+                    <Button Grid.Column="10" Style="{StaticResource StarToggleButton}" Margin="12,0,0,0"
                             Click="FavoriteToggle_Click" ToolTip="Add to favorites"/>
                 </Grid>
+
+                <!-- Per-device audio processing: EQ + mono downmix, collapsed by default -->
+                <Border Visibility="{Binding IsProcessingExpanded, Converter={StaticResource BoolToVisibility}}"
+                        Background="{DynamicResource BgBrush}" CornerRadius="8"
+                        Margin="18,10,4,0" Padding="18,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="BASS" Style="{StaticResource EyebrowText}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding BassBoost, StringFormat={}{0:+0;-0;0}dB}"
+                                           FontSize="12" Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Grid>
+                            <Slider Minimum="-12" Maximum="12" Value="{Binding BassBoost}" Margin="0,4,0,0"
+                                    IsEnabled="{Binding IsConnected}"/>
+                            <Grid Margin="0,2,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="-12dB" FontSize="10"
+                                           Foreground="{DynamicResource TextFaintBrush}" HorizontalAlignment="Left"/>
+                                <TextBlock Grid.Column="1" Text="0" FontSize="10"
+                                           Foreground="{DynamicResource TextFaintBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="+12dB" FontSize="10"
+                                           Foreground="{DynamicResource TextFaintBrush}" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,20,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="TREBLE" Style="{StaticResource EyebrowText}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Treble, StringFormat={}{0:+0;-0;0}dB}"
+                                           FontSize="12" Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Grid>
+                            <Slider Minimum="-12" Maximum="12" Value="{Binding Treble}" Margin="0,4,0,0"
+                                    IsEnabled="{Binding IsConnected}"/>
+                            <Grid Margin="0,2,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="-12dB" FontSize="10"
+                                           Foreground="{DynamicResource TextFaintBrush}" HorizontalAlignment="Left"/>
+                                <TextBlock Grid.Column="1" Text="0" FontSize="10"
+                                           Foreground="{DynamicResource TextFaintBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="+12dB" FontSize="10"
+                                           Foreground="{DynamicResource TextFaintBrush}" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <TextBlock Text="MONO" Style="{StaticResource EyebrowText}" Margin="0,0,0,6"
+                                       HorizontalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsMono}" IsEnabled="{Binding IsConnected}"
+                                      HorizontalAlignment="Center" Style="{StaticResource ToggleSwitch}"
+                                      ToolTip="Sum stereo to both ears — for single-earbud devices"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                </StackPanel>
             </Border>
         </DataTemplate>
     </Window.Resources>
@@ -261,6 +376,102 @@
                 </Border>
             </Popup>
         </Grid>
+
+        <!-- Guest volume-control QR popup, shared across all device rows; content/placement
+             set dynamically in code-behind from whichever row's Share button was clicked -->
+        <Popup x:Name="GuestSharePopup" Placement="Bottom" HorizontalOffset="-260" VerticalOffset="4"
+               StaysOpen="False" AllowsTransparency="True">
+            <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource BorderBrush2}"
+                    BorderThickness="1" CornerRadius="10" Padding="22" Width="270">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock x:Name="GuestShareDeviceName" Text="Device" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold"
+                               FontSize="15" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="Scan to control volume from a phone on the same Wi-Fi"
+                               FontSize="11.5" Foreground="{DynamicResource TextFaintBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                    <Border Background="White" CornerRadius="8" Padding="10" HorizontalAlignment="Center">
+                        <Image x:Name="GuestShareQrImage" Width="180" Height="180"/>
+                    </Border>
+                    <TextBlock Text="PIN" Style="{StaticResource EyebrowText}" Margin="0,16,0,4" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="GuestSharePinText" Text="000000" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold"
+                               FontSize="22" HorizontalAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
+                    <TextBlock x:Name="GuestShareUnavailableText" Visibility="Collapsed"
+                               Text="Couldn't start the guest server — check your network connection."
+                               FontSize="11.5" Foreground="{DynamicResource DangerBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- Guided sync calibration: play a click, tap when heard, compute the delay -->
+        <Popup x:Name="CalibratePopup" Placement="Bottom" HorizontalOffset="-260" VerticalOffset="4"
+               StaysOpen="True" AllowsTransparency="True" Closed="CalibratePopup_Closed">
+            <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource BorderBrush2}"
+                    BorderThickness="1" CornerRadius="10" Padding="24" Width="290">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.35"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="SYNC CALIBRATION" Style="{StaticResource EyebrowText}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="CalibrateDeviceName" Text="Device" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold"
+                               FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,18"/>
+
+                    <!-- Idle state -->
+                    <StackPanel x:Name="CalibrateIdlePanel">
+                        <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="12.5"
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,18">
+                            We'll play a short click through this device every 1.5 seconds. Tap the
+                            button below the moment you hear each one — five taps gives a good estimate.
+                        </TextBlock>
+                        <Button Content="Start Test" Style="{StaticResource FlatButton}"
+                                Background="{DynamicResource AccentBrush}" Foreground="#0C1512"
+                                Padding="0,12" Click="CalibrateStart_Click"/>
+                    </StackPanel>
+
+                    <!-- Running state -->
+                    <StackPanel x:Name="CalibrateRunningPanel" Visibility="Collapsed">
+                        <TextBlock x:Name="CalibrateTapCountText" Text="0 of 5 taps" FontSize="12.5"
+                                   Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <Button Content="TAP WHEN YOU HEAR IT" Click="CalibrateTap_Click"
+                                Height="90" FontSize="14" FontWeight="Bold">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource FlatButton}">
+                                    <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter Property="Foreground" Value="#0C1512"/>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="Cancel" Style="{StaticResource SmallFlatButton}"
+                                Background="Transparent" Foreground="{DynamicResource TextFaintBrush}"
+                                BorderThickness="0" Margin="0,10,0,0" Click="CalibrateCancel_Click"/>
+                    </StackPanel>
+
+                    <!-- Done state -->
+                    <StackPanel x:Name="CalibrateDonePanel" Visibility="Collapsed">
+                        <TextBlock Text="ESTIMATED DELAY" Style="{StaticResource EyebrowText}" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="CalibrateResultText" Text="0ms" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold"
+                                   FontSize="36" Foreground="{DynamicResource AccentBrush}"
+                                   HorizontalAlignment="Center" Margin="0,4,0,20"/>
+                        <Button Content="Apply" Style="{StaticResource FlatButton}"
+                                Background="{DynamicResource AccentBrush}" Foreground="#0C1512"
+                                Padding="0,12" Margin="0,0,0,8" Click="CalibrateApply_Click"/>
+                        <Button Content="Retry" Style="{StaticResource SmallFlatButton}"
+                                Background="{DynamicResource Surface3Brush}" Foreground="{DynamicResource TextBrush}"
+                                BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="1"
+                                Padding="0,10" Click="CalibrateStart_Click"/>
+                    </StackPanel>
+
+                    <!-- Not enough taps -->
+                    <TextBlock x:Name="CalibrateNotEnoughText" Visibility="Collapsed"
+                               Text="Didn't get enough usable taps — try again, tapping right as you hear each click."
+                               FontSize="12" Foreground="{DynamicResource DangerBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+            </Border>
+        </Popup>
 
         <!-- Master bar -->
         <Border DockPanel.Dock="Top" MinHeight="150" ClipToBounds="True"

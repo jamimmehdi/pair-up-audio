@@ -13,6 +13,9 @@ drivers/
 # Publish output
 publish/
 
+# Compiled installer output
+installer/Output/
+
 # OS cruft
 Thumbs.db
 .DS_Store

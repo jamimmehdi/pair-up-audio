@@ -116,6 +116,30 @@
             </Setter>
         </Style>
 
+        <!-- Generic icon-content toggle button (unlike StarToggleButton, honors whatever
+             Content/glyph is set on the Button itself, via a real ContentPresenter) -->
+        <Style x:Key="IconToggleButton" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Star toggle for favoriting a device -->
         <Style x:Key="StarToggleButton" TargetType="Button">
             <Setter Property="Width" Value="32"/>

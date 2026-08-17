@@ -3,7 +3,9 @@ using System.Text.Json;
 
 namespace PairUp.App.Services;
 
-public sealed record DeviceSettings(string DeviceId, bool IsConnected, double Volume, double LatencyMs, bool IsFavorite = false);
+public sealed record DeviceSettings(
+    string DeviceId, bool IsConnected, double Volume, double LatencyMs, bool IsFavorite = false,
+    double BassBoost = 0, double Treble = 0, bool IsMono = false);
 
 public sealed record AppSettings(double MasterVolume, List<DeviceSettings> Devices);
 
