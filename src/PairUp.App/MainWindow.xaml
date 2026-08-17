@@ -366,12 +366,62 @@
                             <TextBlock Text="Facebook" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Cursor="Hand"
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14" Cursor="Hand"
                                     Tag="https://www.instagram.com/_byte_bard_/" MouseLeftButtonUp="CreditLink_Click">
                             <TextBlock Text="&#xE114;" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                        Foreground="{DynamicResource AccentBrush}" Width="22"/>
                             <TextBlock Text="Instagram" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
                         </StackPanel>
+
+                        <Border BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="0,1,0,0" Margin="0,0,0,10"/>
+
+                        <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="LicenseLink_Click">
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}" Width="22"/>
+                            <TextBlock Text="License (MIT)" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Popup>
+
+            <Popup x:Name="LicensePopup" PlacementTarget="{Binding ElementName=CreditButton}"
+                   Placement="Bottom" HorizontalOffset="-340" VerticalOffset="4"
+                   StaysOpen="False" AllowsTransparency="True">
+                <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource BorderBrush2}"
+                        BorderThickness="1" CornerRadius="10" Padding="20" Width="380">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.35"/>
+                    </Border.Effect>
+                    <StackPanel>
+                        <TextBlock Text="MIT LICENSE" Style="{StaticResource EyebrowText}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Copyright (c) 2026 Jamim Mehdi" FontFamily="Bahnschrift SemiBold, Segoe UI Semibold"
+                                   FontSize="14" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12"/>
+                        <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto" Margin="0,0,0,14">
+                            <TextBlock TextWrapping="Wrap" FontSize="11.5" LineHeight="18"
+                                       Foreground="{DynamicResource TextMutedBrush}">
+                                Permission is hereby granted, free of charge, to any person obtaining a copy
+                                of this software and associated documentation files (the "Software"), to deal
+                                in the Software without restriction, including without limitation the rights
+                                to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                                copies of the Software, and to permit persons to whom the Software is
+                                furnished to do so, subject to the following conditions:
+                                <LineBreak/><LineBreak/>
+                                The above copyright notice and this permission notice shall be included in all
+                                copies or substantial portions of the Software.
+                                <LineBreak/><LineBreak/>
+                                THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+                                IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                                FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+                                AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+                                LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+                                OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+                                SOFTWARE.
+                            </TextBlock>
+                        </ScrollViewer>
+                        <Button Content="Close" Style="{StaticResource SmallFlatButton}"
+                                Background="{DynamicResource Surface3Brush}" Foreground="{DynamicResource TextBrush}"
+                                BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="1"
+                                Padding="0,10" Click="LicenseClose_Click"/>
                     </StackPanel>
                 </Border>
             </Popup>

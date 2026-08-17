@@ -43,6 +43,10 @@ A real-time FFT-driven waveform reacts to whatever's actually playing, and the w
 
 <img src="docs/screenshots/credit-popup.png" alt="Developer credit popup with social links" width="380">
 
+The credit popup (the ⓘ button in the title bar) also has a **License (MIT)** link that opens the full license text right inside the app.
+
+<img src="docs/screenshots/license-popup.png" alt="In-app MIT license popup" width="380">
+
 ## Installation
 
 Grab the latest `PairUp-Setup-x.y.z.exe` from the [Releases page](https://github.com/jamimmehdi/pair-up-audio/releases/latest) and run it. It's a per-user install (no admin prompt needed), and it registers a proper Start Menu shortcut and uninstaller.

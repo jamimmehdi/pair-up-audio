@@ -259,6 +259,14 @@ public partial class MainWindow : Window
         CreditPopup.IsOpen = false;
     }
 
+    private void LicenseLink_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        CreditPopup.IsOpen = false;
+        LicensePopup.IsOpen = true;
+    }
+
+    private void LicenseClose_Click(object sender, RoutedEventArgs e) => LicensePopup.IsOpen = false;
+
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void Maximize_Click(object sender, RoutedEventArgs e) =>
