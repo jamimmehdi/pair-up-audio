@@ -213,7 +213,13 @@ public partial class MainWindow : Window
 
                 if (install != MessageBoxResult.Yes) return;
 
-                var progress = new Progress<double>(p => button.Content = $"DOWNLOADING {p:0}%");
+                UpdateProgressBar.Value = 0;
+                UpdateProgressBar.Visibility = Visibility.Visible;
+                var progress = new Progress<double>(p =>
+                {
+                    button.Content = $"DOWNLOADING {p:0}%";
+                    UpdateProgressBar.Value = p;
+                });
                 var installerPath = await UpdateChecker.DownloadInstallerAsync(
                     result.InstallerDownloadUrl, result.InstallerAssetName!, AppVersion, progress);
 
@@ -246,6 +252,7 @@ public partial class MainWindow : Window
         {
             button.Content = originalContent;
             button.IsEnabled = true;
+            UpdateProgressBar.Visibility = Visibility.Collapsed;
         }
     }
 

@@ -346,6 +346,13 @@
                                    FontSize="18" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,14"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Cursor="Hand"
+                                    Tag="https://claude.com/claude-code" MouseLeftButtonUp="CreditLink_Click">
+                            <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}" Width="22"/>
+                            <TextBlock Text="Built with Claude Code" Foreground="{DynamicResource TextMutedBrush}" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Cursor="Hand"
                                     Tag="https://in.linkedin.com/in/jamim-mehdi" MouseLeftButtonUp="CreditLink_Click">
                             <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                        Foreground="{DynamicResource AccentBrush}" Width="22"/>
@@ -594,19 +601,23 @@
         <!-- Footer -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource Surface2Brush}" Padding="20,12"
                 BorderBrush="{DynamicResource BorderBrush2}" BorderThickness="0,1,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontSize="13"
-                           Foreground="{DynamicResource TextFaintBrush}" VerticalAlignment="Center"/>
-                <Button x:Name="CheckUpdateButton" Grid.Column="1" Content="CHECK FOR UPDATES"
-                        Click="CheckUpdate_Click" Style="{StaticResource SmallFlatButton}"
-                        Background="{DynamicResource Surface3Brush}" Foreground="{DynamicResource TextMutedBrush}"
-                        BorderBrush="{DynamicResource BorderBrush2}" Padding="10,5"
-                        FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="10.5"/>
-            </Grid>
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding StatusText}" FontSize="13"
+                               Foreground="{DynamicResource TextFaintBrush}" VerticalAlignment="Center"/>
+                    <Button x:Name="CheckUpdateButton" Grid.Column="1" Content="CHECK FOR UPDATES"
+                            Click="CheckUpdate_Click" Style="{StaticResource SmallFlatButton}"
+                            Background="{DynamicResource Surface3Brush}" Foreground="{DynamicResource TextMutedBrush}"
+                            BorderBrush="{DynamicResource BorderBrush2}" Padding="10,5"
+                            FontFamily="Bahnschrift SemiBold, Segoe UI Semibold" FontSize="10.5"/>
+                </Grid>
+                <ProgressBar x:Name="UpdateProgressBar" Style="{StaticResource FlatProgressBar}"
+                             Minimum="0" Maximum="100" Margin="0,10,0,0" Visibility="Collapsed"/>
+            </StackPanel>
         </Border>
 
         <!-- Device grid -->

@@ -192,6 +192,25 @@
             </Setter>
         </Style>
 
+        <Style x:Key="FlatProgressBar" TargetType="ProgressBar">
+            <Setter Property="Height" Value="6"/>
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border CornerRadius="3" Background="{TemplateBinding Background}" ClipToBounds="True">
+                            <Grid x:Name="PART_Track">
+                                <Border x:Name="PART_Indicator" CornerRadius="3"
+                                        Background="{TemplateBinding Foreground}" HorizontalAlignment="Left"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="CardBorder" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush2}"/>
