@@ -196,6 +196,14 @@ public sealed class GuestServer : IDisposable
             padding:24px;
           }
           .card{width:100%; max-width:360px; text-align:center;}
+          .brand{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:32px;}
+          .brand-mark{
+            width:28px; height:28px; border-radius:8px; flex:none;
+            background:linear-gradient(135deg,#33E0C0,#1F9E86);
+            display:flex; align-items:center; justify-content:center;
+          }
+          .brand-word{font-size:14px; font-weight:700; letter-spacing:.08em; color:#a89c89;}
+          .footer-brand{margin-top:36px; font-size:11px; color:#4A4033;}
           .eyebrow{font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:#6f6455; margin-bottom:8px;}
           .name{font-size:24px; font-weight:600; margin-bottom:40px;}
           .volume-value{font-size:56px; font-weight:700; color:#33e0c0; margin-bottom:24px; font-variant-numeric:tabular-nums;}
@@ -237,6 +245,15 @@ public sealed class GuestServer : IDisposable
         </head>
         <body>
           <div class="card">
+            <div class="brand">
+              <div class="brand-mark">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                  <path d="M3 12c2-4 4-6 5-6s2 8 4 8 2-10 4-10 3 8 5 8" stroke="#0C1512"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span class="brand-word">PAIRUP</span>
+            </div>
             <div class="eyebrow">Now controlling</div>
             <div class="name">{{deviceName}}</div>
             <div class="volume-value" id="vol">--</div>
@@ -260,6 +277,7 @@ public sealed class GuestServer : IDisposable
                 <div class="toggle" id="monoToggle"><i></i></div>
               </div>
             </div>
+            <div class="footer-brand">Shared from PairUp</div>
           </div>
           <script>
             const deviceId = {{JsonSerializer.Serialize(deviceId)}};
