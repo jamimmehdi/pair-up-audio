@@ -47,6 +47,8 @@ A real-time FFT-driven waveform reacts to whatever's actually playing, and the w
 
 Grab the latest `PairUp-Setup-x.y.z.exe` from the [Releases page](https://github.com/jamimmehdi/pair-up-audio/releases/latest) and run it. It's a per-user install (no admin prompt needed), and it registers a proper Start Menu shortcut and uninstaller.
 
+> **Windows SmartScreen warning:** since the installer isn't code-signed, Windows will show a "Windows protected your PC" prompt the first time you run it. This is expected for any new, unsigned app — click **More info**, then **Run anyway**.
+
 ## Building from source
 
 Requires the [.NET 8 SDK](https://dotnet.microsoft.com/download).
@@ -67,4 +69,4 @@ PairUp opens a `WasapiLoopbackCapture` on your system's current default playback
 
 ## License
 
-No license file is currently included — all rights reserved by the author unless stated otherwise.
+MIT — see [LICENSE](LICENSE).
