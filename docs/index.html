@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PairUp — One sound. Every ear.</title>
+<meta name="description" content="PairUp streams whatever's playing on your PC to every Bluetooth headphone, wired headset, and speaker in the room — all at once, all in sync. Free and open source for Windows.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2333E0C0'/%3E%3Cpath d='M5 18c3-6 6-9 8-9s3 12 6 12 3-15 6-15 4.5 12 7.5 12' stroke='%230C1512' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #100e0c;
+    --bg2: #14120f;
+    --surface: #1b1812;
+    --surface2: #242019;
+    --border: #362f24;
+    --text: #f3ede1;
+    --text-muted: #a89c89;
+    --text-faint: #6f6455;
+    --accent: #33e0c0;
+    --accent-dark: #1f9e86;
+    --accent2: #ffb648;
+    --ink-on-accent: #0c1512;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .wordmark {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  img { max-width: 100%; display: block; }
+
+  .wrap {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- background glow ---------- */
+  .glow {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(600px 500px at 12% -5%, rgba(51,224,192,0.16), transparent 60%),
+      radial-gradient(700px 600px at 100% 10%, rgba(255,182,72,0.10), transparent 55%),
+      radial-gradient(900px 700px at 50% 120%, rgba(51,224,192,0.08), transparent 60%);
+  }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(16, 14, 12, 0.72);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 8px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 20px rgba(51,224,192,0.35);
+  }
+  .brand-mark svg { width: 17px; height: 17px; }
+  .wordmark { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a.textlink {
+    font-size: 14px; color: var(--text-muted); font-weight: 500;
+    transition: color 0.15s ease;
+  }
+  .nav-links a.textlink:hover { color: var(--text); }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14.5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: var(--ink-on-accent);
+    box-shadow: 0 8px 24px -6px rgba(51,224,192,0.45);
+  }
+  .btn-primary:hover { box-shadow: 0 10px 30px -6px rgba(51,224,192,0.6); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.07); }
+  .btn-sm { padding: 9px 16px; font-size: 13px; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding: 96px 24px 40px;
+    text-align: center;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(51,224,192,0.08);
+    border: 1px solid rgba(51,224,192,0.25);
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  h1.headline {
+    font-size: clamp(38px, 6vw, 68px);
+    font-weight: 700;
+    line-height: 1.05;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  h1.headline .accent-text {
+    background: linear-gradient(120deg, var(--accent), #7fffe2 40%, var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .subhead {
+    max-width: 620px;
+    margin: 24px auto 0;
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+  .hero-ctas {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    margin-top: 36px;
+    flex-wrap: wrap;
+  }
+  .trust-line {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
+  }
+  .trust-line .sep { margin: 0 8px; opacity: 0.5; }
+
+  /* ---------- hero screenshot ---------- */
+  .hero-shot {
+    margin: 64px auto 0;
+    max-width: 980px;
+    position: relative;
+  }
+  .hero-shot-frame {
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 40px 100px -30px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,0,0,0.4);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .hero-shot-frame img { width: 100%; }
+  .hero-shot::after {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    z-index: -1;
+    background: radial-gradient(ellipse at center, rgba(51,224,192,0.18), transparent 65%);
+    filter: blur(10px);
+  }
+
+  /* ---------- section framing ---------- */
+  section { padding: 120px 24px; }
+  .section-head {
+    max-width: 640px;
+    margin: 0 auto 64px;
+    text-align: center;
+  }
+  .section-head h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 700; }
+  .section-head p { margin-top: 14px; color: var(--text-muted); font-size: 16.5px; }
+
+  /* ---------- feature rows ---------- */
+  .feature-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 56px 0;
+  }
+  .feature-row.reverse .feature-copy { order: 2; }
+  .feature-row.reverse .feature-shot { order: 1; }
+  .feature-copy .tag {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 14px;
+  }
+  .feature-copy h3 { font-size: 28px; font-weight: 700; margin-bottom: 14px; }
+  .feature-copy p { color: var(--text-muted); font-size: 16px; }
+  .feature-shot {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 30px 70px -25px rgba(0,0,0,0.6);
+    background: var(--surface);
+  }
+  .feature-shot.pair { display: flex; }
+  .feature-shot.pair img { width: 50%; border-right: 1px solid rgba(255,255,255,0.06); }
+  .feature-shot.pair img:last-child { border-right: none; }
+
+  /* ---------- how it works ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px 26px;
+  }
+  .step .num {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: var(--ink-on-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px;
+    margin-bottom: 18px;
+  }
+  .step h4 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .step p { color: var(--text-muted); font-size: 14.5px; margin: 0; }
+
+  /* ---------- feature grid (small cards) ---------- */
+  .grid-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover { border-color: rgba(51,224,192,0.35); transform: translateY(-3px); }
+  .card .icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(51,224,192,0.1);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+  .card h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .card p { font-size: 14px; color: var(--text-muted); margin: 0; }
+
+  /* ---------- CTA banner ---------- */
+  .cta-banner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 72px 56px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(51,224,192,0.14), rgba(255,182,72,0.08));
+    border: 1px solid rgba(51,224,192,0.25);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-banner h2 { font-size: clamp(26px, 4vw, 36px); font-weight: 700; }
+  .cta-banner p { color: var(--text-muted); margin-top: 12px; font-size: 16px; }
+  .cta-banner .hero-ctas { margin-top: 30px; }
+
+  /* ---------- footer ---------- */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 48px 24px 32px;
+  }
+  .footer-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+  .footer-links a { font-size: 13.5px; color: var(--text-muted); transition: color 0.15s ease; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-note { font-size: 13px; color: var(--text-faint); }
+
+  @media (max-width: 860px) {
+    .feature-row { grid-template-columns: 1fr; gap: 32px; }
+    .feature-row.reverse .feature-copy { order: 1; }
+    .feature-row.reverse .feature-shot { order: 2; }
+    .steps { grid-template-columns: 1fr; }
+    .grid-cards { grid-template-columns: 1fr 1fr; }
+    .nav-links .textlink { display: none; }
+  }
+  @media (max-width: 540px) {
+    .grid-cards { grid-template-columns: 1fr; }
+    .feature-shot.pair { flex-direction: column; }
+    .feature-shot.pair img { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .cta-banner { padding: 48px 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M3 12c2-4 4-6 5-6s2 8 4 8 2-10 4-10 3 8 5 8" stroke="#0C1512" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="wordmark">PAIRUP</span>
+    </div>
+    <div class="nav-links">
+      <a class="textlink" href="#features">Features</a>
+      <a class="textlink" href="#how">How it works</a>
+      <a class="textlink" href="https://github.com/jamimmehdi/pair-up-audio">GitHub</a>
+      <a class="btn btn-primary btn-sm" href="https://github.com/jamimmehdi/pair-up-audio/releases/latest">Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <span class="eyebrow"><span class="dot"></span>Free &amp; open source for Windows</span>
+  <h1 class="headline">One sound.<br><span class="accent-text">Every ear.</span></h1>
+  <p class="subhead">
+    PairUp streams whatever's playing on your PC to every Bluetooth headphone, wired headset,
+    and speaker in the room — all at once, all in sync. No virtual driver, no fuss.
+  </p>
+  <div class="hero-ctas">
+    <a class="btn btn-primary" href="https://github.com/jamimmehdi/pair-up-audio/releases/latest">
+      Download for Windows
+    </a>
+    <a class="btn btn-ghost" href="https://github.com/jamimmehdi/pair-up-audio">
+      View on GitHub
+    </a>
+  </div>
+  <div class="trust-line">Windows 10/11<span class="sep">·</span>MIT licensed<span class="sep">·</span>No account required</div>
+
+  <div class="hero-shot">
+    <div class="hero-shot-frame">
+      <img src="screenshots/main-window.png" alt="PairUp main window showing connected devices, favorites, and live volume/delay controls">
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="section-head">
+    <h2>Built for movie night, not the boardroom</h2>
+    <p>Every feature exists because someone actually needed it on a Friday night.</p>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-copy">
+      <span class="tag">Fan-out audio</span>
+      <h3>Connect as many devices as you have batteries for</h3>
+      <p>
+        PairUp listens in on whatever's already playing on your PC — no changing your default
+        device, no rerouting anything. Every connected headphone, headset, or speaker gets its
+        own independent volume and delay, kept in sync by a background balancer so nobody
+        drifts out of step over a long session.
+      </p>
+    </div>
+    <div class="feature-shot">
+      <img src="screenshots/main-window.png" alt="Device list with volume and delay sliders per device">
+    </div>
+  </div>
+
+  <div class="feature-row reverse">
+    <div class="feature-copy">
+      <span class="tag">Per-device processing</span>
+      <h3>Tune every device to sound right, not just loud</h3>
+      <p>
+        Bass and treble shelving EQ per device, plus a mono downmix toggle for older
+        single-earbud devices that would otherwise lose half the mix. Settings are remembered
+        per device, so everyone's headphones sound the same way next time too.
+      </p>
+    </div>
+    <div class="feature-shot">
+      <img src="screenshots/eq-panel.png" alt="Per-device EQ panel with bass, treble, and mono controls">
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-copy">
+      <span class="tag">Guided calibration</span>
+      <h3>Stop guessing at the delay slider by ear</h3>
+      <p>
+        Tap Calibrate on any device and PairUp plays a short click every 1.5 seconds — tap along
+        as you hear each one, and it estimates that device's real perceived delay from your taps,
+        correcting for reaction time automatically.
+      </p>
+    </div>
+    <div class="feature-shot pair">
+      <img src="screenshots/calibration.png" alt="Sync calibration popup, idle state">
+      <img src="screenshots/calibration-running.png" alt="Sync calibration popup, tap-along running state">
+    </div>
+  </div>
+
+  <div class="feature-row reverse">
+    <div class="feature-copy">
+      <span class="tag">Guest control</span>
+      <h3>Let a friend adjust their own volume from their phone</h3>
+      <p>
+        Share a QR code and PIN for a lightweight web page served on your own Wi-Fi — no app
+        install, no account. Guests get volume, mute, and EQ for their own device only. Nobody
+        else's device is exposed.
+      </p>
+    </div>
+    <div class="feature-shot">
+      <img src="screenshots/guest-share.png" alt="Guest share popup with QR code and PIN">
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <div class="feature-copy">
+      <span class="tag">Adaptive theming</span>
+      <h3>Matches your Windows theme, live</h3>
+      <p>
+        Light or dark, PairUp follows your system setting the instant you switch it — no
+        restart required. Built to feel like it belongs on your desktop, not bolted onto it.
+      </p>
+    </div>
+    <div class="feature-shot">
+      <img src="screenshots/light-theme.png" alt="Main window rendered in light theme">
+    </div>
+  </div>
+</section>
+
+<section id="how" style="padding-top:0;">
+  <div class="section-head">
+    <h2>How it works</h2>
+    <p>Three steps, no drivers to install.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h4>Capture</h4>
+      <p>PairUp taps into whatever's already playing on your PC's current default output — nothing changes about how your system plays audio.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h4>Fan out</h4>
+      <p>Each connected device gets its own independent render chain — volume, delay, and EQ, all from the same synced source.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h4>Stay in sync</h4>
+      <p>A background balancer continuously checks every device's buffer and nudges anyone who's drifted, so long sessions stay locked together.</p>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="section-head">
+    <h2>And the small stuff that adds up</h2>
+  </div>
+  <div class="grid-cards">
+    <div class="card">
+      <div class="icon">⭐</div>
+      <h4>Favorites &amp; auto-sort</h4>
+      <p>Pin your regulars to the top so you're not hunting through every Bluetooth device that's ever paired with your PC.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔊</div>
+      <h4>Master volume, synced with Windows</h4>
+      <p>Adjust it in PairUp or the Windows flyout — they stay in lockstep, mute included.</p>
+    </div>
+    <div class="card">
+      <div class="icon">📊</div>
+      <h4>Live spectrum visualizer</h4>
+      <p>A real FFT-driven waveform that reacts to what's actually playing, not a canned animation.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🗂️</div>
+      <h4>System tray mode</h4>
+      <p>Minimize or close to keep PairUp running quietly — toggle devices right from the tray menu.</p>
+    </div>
+    <div class="card">
+      <div class="icon">⬇️</div>
+      <h4>One-click updates</h4>
+      <p>PairUp checks for new releases in the background and tells you when one's ready — no manual downloading.</p>
+    </div>
+    <div class="card">
+      <div class="icon">🔓</div>
+      <h4>Free and open source</h4>
+      <p>MIT licensed, source on GitHub. No account, no telemetry, no catch.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="cta-banner">
+    <h2>Stop passing the AUX cord around</h2>
+    <p>Free for Windows. Takes about two minutes to set up.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="https://github.com/jamimmehdi/pair-up-audio/releases/latest">Download PairUp</a>
+      <a class="btn btn-ghost" href="https://github.com/jamimmehdi/pair-up-audio">Star on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M3 12c2-4 4-6 5-6s2 8 4 8 2-10 4-10 3 8 5 8" stroke="#0C1512" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="wordmark">PAIRUP</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/jamimmehdi/pair-up-audio">GitHub</a>
+      <a href="https://github.com/jamimmehdi/pair-up-audio/releases/latest">Releases</a>
+      <a href="https://github.com/jamimmehdi/pair-up-audio/blob/main/LICENSE">MIT License</a>
+      <a href="https://claude.com/claude-code">Built with Claude Code</a>
+    </div>
+  </div>
+  <div class="wrap footer-note" style="margin-top:24px;">
+    © 2026 Jamim Mehdi. PairUp is not affiliated with Microsoft.
+  </div>
+</footer>
+
+</body>
+</html>
