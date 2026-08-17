@@ -325,18 +325,28 @@
   .footer-note { font-size: 13px; color: var(--text-faint); }
 
   @media (max-width: 860px) {
-    .feature-row { grid-template-columns: 1fr; gap: 32px; }
+    section { padding: 72px 20px; }
+    .hero { padding: 64px 20px 32px; }
+    .section-head { margin-bottom: 44px; }
+    .feature-row { grid-template-columns: 1fr; gap: 32px; padding: 36px 0; }
     .feature-row.reverse .feature-copy { order: 1; }
     .feature-row.reverse .feature-shot { order: 2; }
     .steps { grid-template-columns: 1fr; }
     .grid-cards { grid-template-columns: 1fr 1fr; }
     .nav-links .textlink { display: none; }
+    .hero-shot { margin-top: 44px; }
   }
   @media (max-width: 540px) {
+    nav .nav-inner { padding: 12px 16px; }
+    section { padding: 56px 16px; }
+    .hero { padding: 48px 16px 24px; }
     .grid-cards { grid-template-columns: 1fr; }
     .feature-shot.pair { flex-direction: column; }
     .feature-shot.pair img { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .cta-banner { padding: 48px 24px; }
+    .btn { width: 100%; justify-content: center; }
+    .hero-ctas { flex-direction: column; align-items: stretch; }
+    .cta-banner .hero-ctas { max-width: 340px; margin-left: auto; margin-right: auto; }
   }
 </style>
 </head>
