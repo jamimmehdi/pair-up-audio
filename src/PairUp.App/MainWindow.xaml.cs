@@ -14,7 +14,7 @@ namespace PairUp.App;
 
 public partial class MainWindow : Window
 {
-    public const string AppVersion = "0.3.4";
+    public const string AppVersion = "0.3.5";
 
     private readonly AudioDeviceManager _deviceManager = new();
     private readonly MainWindowViewModel _viewModel = new();
@@ -73,6 +73,8 @@ public partial class MainWindow : Window
             _guestServer = new GuestServer(() => _viewModel.Devices, Dispatcher);
             try { _guestServer.Start(); }
             catch { /* Guest sharing just won't be available; nothing else depends on it. */ }
+
+            _ = CheckForUpdatesOnLaunchAsync();
         };
         _audioEngine.SyncStatusUpdated += AudioEngine_SyncStatusUpdated;
         _audioEngine.OsMasterVolumeChanged += OsMasterVolumeChanged;
@@ -252,7 +254,41 @@ public partial class MainWindow : Window
             button.Content = originalContent;
             button.IsEnabled = true;
             UpdateProgressBar.Visibility = Visibility.Collapsed;
+            ResetUpdateButtonStyle();
+            RefreshStatusText();
         }
+    }
+
+    /// <summary>
+    /// Quietly checks for an update shortly after launch, with no "Checking…" UI and no popup
+    /// on failure or when already up to date — only surfaces something when there's genuinely a
+    /// newer version, via a status line, an accented Check for Updates button, and a tray balloon.
+    /// </summary>
+    private async Task CheckForUpdatesOnLaunchAsync()
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var result = await UpdateChecker.CheckAsync(AppVersion);
+            if (!result.UpdateAvailable) return;
+
+            _viewModel.StatusText = $"Update available — v{result.LatestVersion} (you're on v{AppVersion}). Click Check for Updates.";
+            CheckUpdateButton.Background = (System.Windows.Media.Brush)FindResource("AccentBrush");
+            CheckUpdateButton.Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x0C, 0x15, 0x12));
+            _tray?.ShowBalloon("PairUp update available",
+                $"Version {result.LatestVersion} is ready — open PairUp and click Check for Updates to install.");
+        }
+        catch
+        {
+            // Silent by design — a background check shouldn't interrupt anyone with network errors.
+        }
+    }
+
+    private void ResetUpdateButtonStyle()
+    {
+        CheckUpdateButton.Background = (System.Windows.Media.Brush)FindResource("Surface3Brush");
+        CheckUpdateButton.Foreground = (System.Windows.Media.Brush)FindResource("TextMutedBrush");
     }
 
     private void CreditButton_Click(object sender, RoutedEventArgs e) => CreditPopup.IsOpen = !CreditPopup.IsOpen;
@@ -331,8 +367,11 @@ public partial class MainWindow : Window
         UpdateConnectedSummary();
         ResortDevices();
         RebuildFavorites();
-        _viewModel.StatusText = $"PairUp v{AppVersion} · {_viewModel.Devices.Count} output device(s) detected";
+        RefreshStatusText();
     }
+
+    private void RefreshStatusText() =>
+        _viewModel.StatusText = $"PairUp v{AppVersion} · {_viewModel.Devices.Count} output device(s) detected";
 
     private void SaveSettings()
     {
