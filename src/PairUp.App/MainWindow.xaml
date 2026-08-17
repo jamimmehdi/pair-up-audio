@@ -162,7 +162,7 @@
                             <TextBlock Grid.Column="1" Text="{Binding LatencyMs, StringFormat={}{0:0}ms}" FontSize="12"
                                        Foreground="{DynamicResource TextMutedBrush}"/>
                         </Grid>
-                        <Slider Minimum="0" Maximum="300" Value="{Binding LatencyMs}" Margin="0,4,0,0"
+                        <Slider Minimum="0" Maximum="1000" Value="{Binding LatencyMs}" Margin="0,4,0,0"
                                 IsEnabled="{Binding IsConnected}"/>
                     </StackPanel>
 

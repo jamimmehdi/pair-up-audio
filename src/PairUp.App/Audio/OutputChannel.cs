@@ -27,7 +27,10 @@ public sealed class OutputChannel : IDisposable
         _buffer = new BufferedWaveProvider(sourceFormat)
         {
             DiscardOnBufferOverflow = true,
-            BufferDuration = TimeSpan.FromMilliseconds(500)
+            // Needs enough headroom for the largest user-set delay (see the 1000ms slider max
+            // in MainWindow.xaml) plus normal in-flight audio, or SetDelay's silence-padding
+            // would silently get discarded instead of actually delaying playback.
+            BufferDuration = TimeSpan.FromMilliseconds(1500)
         };
 
         ISampleProvider sampleChain = _buffer.ToSampleProvider();

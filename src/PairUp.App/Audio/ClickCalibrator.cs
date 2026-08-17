@@ -64,7 +64,7 @@ public sealed class ClickCalibrator : IDisposable
 
         var sorted = _tapDeltasMs.OrderBy(d => d).ToList();
         var median = sorted[sorted.Count / 2];
-        return Math.Clamp(median - AssumedReactionTimeMs, 0, 300);
+        return Math.Clamp(median - AssumedReactionTimeMs, 0, 1000);
     }
 
     public void Stop()
