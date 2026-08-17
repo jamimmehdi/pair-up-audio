@@ -14,7 +14,7 @@ namespace PairUp.App;
 
 public partial class MainWindow : Window
 {
-    public const string AppVersion = "0.3.3";
+    public const string AppVersion = "0.3.4";
 
     private readonly AudioDeviceManager _deviceManager = new();
     private readonly MainWindowViewModel _viewModel = new();
@@ -28,7 +28,6 @@ public partial class MainWindow : Window
     private const int CalibrationTapTarget = 5;
     private TrayIconService? _tray;
     private bool _hasShownTrayBalloon;
-    private bool _isExiting;
 
     public MainWindow()
     {
@@ -41,7 +40,20 @@ public partial class MainWindow : Window
             ApplyRoundedCorners();
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(WndProc);
         };
-        Closed += (_, _) => { _visualizer?.Stop(); _audioEngine.Dispose(); _guestServer?.Dispose(); _calibrator.Dispose(); _tray?.Dispose(); };
+        Closed += (_, _) =>
+        {
+            _visualizer?.Stop();
+            _audioEngine.Dispose();
+            _guestServer?.Dispose();
+            _calibrator.Dispose();
+            _tray?.Dispose();
+
+            // NAudio's native WASAPI capture/render threads aren't always true .NET background
+            // threads, so the process can outlive every window by several seconds even after
+            // full disposal — which the update installer sees as the exe still being locked and
+            // fails to close it. Force a real process exit once cleanup is done.
+            Environment.Exit(0);
+        };
 
         _tray = new TrayIconService(
             () => _viewModel.Devices,
@@ -50,12 +62,6 @@ public partial class MainWindow : Window
             ExitApp)
         { Visible = true };
 
-        Closing += (_, e) =>
-        {
-            if (_isExiting) return;
-            e.Cancel = true;
-            WindowState = WindowState.Minimized;
-        };
         Loaded += (_, _) =>
         {
             // Start capture immediately so the visualizer has real audio to react to right away,
@@ -98,14 +104,7 @@ public partial class MainWindow : Window
         });
     }
 
-    private void ExitApp()
-    {
-        Dispatcher.Invoke(() =>
-        {
-            _isExiting = true;
-            Close();
-        });
-    }
+    private void ExitApp() => Dispatcher.Invoke(Close);
 
     private void AudioEngine_SyncStatusUpdated(IReadOnlyList<SyncStatus> statuses)
     {
@@ -284,7 +283,11 @@ public partial class MainWindow : Window
     private void Maximize_Click(object sender, RoutedEventArgs e) =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
-    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+    // The window's own X button minimizes to tray rather than exiting (matching the tray-mode
+    // feature); every other close path — Application.Shutdown() during self-update, the tray's
+    // own Exit item, or an external close request like the update installer's Restart Manager
+    // check — should actually close the app, so there's no blanket Closing handler to fight them.
+    private void Close_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void LoadDevices()
     {

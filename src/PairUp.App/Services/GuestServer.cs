@@ -375,7 +375,11 @@ public sealed class GuestServer : IDisposable
 
     public void Dispose()
     {
-        _app?.StopAsync().GetAwaiter().GetResult();
+        // Run on a thread-pool thread rather than awaiting inline: StopAsync's continuations
+        // otherwise try to resume on the caller's SynchronizationContext, which deadlocks when
+        // called from WPF's Closed handler (the UI thread is the one blocked waiting on us).
+        if (_app is { } app)
+            Task.Run(() => app.StopAsync()).GetAwaiter().GetResult();
         IsRunning = false;
     }
 }
