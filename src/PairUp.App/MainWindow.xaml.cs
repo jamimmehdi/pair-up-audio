@@ -14,7 +14,7 @@ namespace PairUp.App;
 
 public partial class MainWindow : Window
 {
-    public const string AppVersion = "0.3.1";
+    public const string AppVersion = "0.3.2";
 
     private readonly AudioDeviceManager _deviceManager = new();
     private readonly MainWindowViewModel _viewModel = new();
@@ -206,7 +206,9 @@ public partial class MainWindow : Window
 
                 var install = MessageBox.Show(
                     $"PairUp v{result.LatestVersion} is available — you're on v{AppVersion}.\n\n" +
-                    "Download and install it now? PairUp will close during the install.",
+                    "Download and install it now? PairUp will close, and the installer will open.\n\n" +
+                    "Since the installer isn't code-signed, Windows may show a \"Windows protected " +
+                    "your PC\" prompt — click \"More info\" then \"Run anyway\" to continue.",
                     "Update available", MessageBoxButton.YesNo, MessageBoxImage.Information);
 
                 if (install != MessageBoxResult.Yes) return;
@@ -215,12 +217,15 @@ public partial class MainWindow : Window
                 var installerPath = await UpdateChecker.DownloadInstallerAsync(
                     result.InstallerDownloadUrl, result.InstallerAssetName!, AppVersion, progress);
 
+                // Not silent: SmartScreen's "Windows protected your PC" prompt still fires for an
+                // unsigned installer regardless of /VERYSILENT, so running silently just hides the
+                // one thing the user actually needs to click through — the install would silently
+                // stall with nothing visible happening. Letting the installer show its own UI (and
+                // that prompt, if it appears) means the user can actually see and complete it; our
+                // [Run] entry relaunches PairUp automatically once the wizard finishes.
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = installerPath,
-                    // Our Inno Setup installer relaunches PairUp itself once the silent
-                    // install finishes, so no manual "open it again" step is needed.
-                    Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS",
                     UseShellExecute = true
                 });
 
