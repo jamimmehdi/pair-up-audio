@@ -14,7 +14,7 @@ namespace PairUp.App;
 
 public partial class MainWindow : Window
 {
-    public const string AppVersion = "0.3.5";
+    public const string AppVersion = "0.3.6";
 
     private readonly AudioDeviceManager _deviceManager = new();
     private readonly MainWindowViewModel _viewModel = new();
