@@ -8,6 +8,8 @@ Windows only lets you play sound to *one* output device at a time. PairUp captur
 
 No virtual audio driver to install, no changing your default playback device — PairUp just listens in on whatever's already playing and mirrors it everywhere else.
 
+> 🤖 **This entire app was vibe-coded with [Claude Code](https://claude.com/claude-code)** — every feature, from the audio engine to this README, was built through conversation with Claude, not hand-written line by line.
+
 ## Features
 
 ### Multi-device audio fan-out
@@ -70,6 +72,10 @@ powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ## How it works
 
 PairUp opens a `WasapiLoopbackCapture` on your system's current default playback device — it never touches or changes what device Windows considers "default," it just listens in. Each device you connect gets its own independent `WasapiOut` render chain (buffer → EQ/mono processing → volume) fed from that same captured stream, so every output can have its own volume, delay, and tone shaping while staying on the same clock. A background balancer periodically compares buffered duration across channels and nudges any device that's drifted back into alignment.
+
+## Credits
+
+Built by [Jamim Mehdi](https://github.com/jamimmehdi), entirely vibe-coded with [Claude Code](https://claude.com/claude-code) — no line of this app was hand-written.
 
 ## License
 
