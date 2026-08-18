@@ -16,6 +16,9 @@ publish/
 # Compiled installer output
 installer/Output/
 
+# Local working drafts (social posts, mockups) — not part of the project
+scratch/
+
 # OS cruft
 Thumbs.db
 .DS_Store

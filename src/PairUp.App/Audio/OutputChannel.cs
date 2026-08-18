@@ -16,6 +16,7 @@ public sealed class OutputChannel : IDisposable
     private readonly WasapiOut _output;
     private readonly WaveFormat _sourceFormat;
     private double _appliedDelayMs;
+    private int _pendingTrimBytes;
 
     public string DeviceId { get; }
 
@@ -47,12 +48,62 @@ public sealed class OutputChannel : IDisposable
         _processingProvider = new DeviceProcessingSampleProvider(sampleChain);
         _volumeProvider = new VolumeSampleProvider(_processingProvider) { Volume = 0.75f };
 
-        _output = new WasapiOut(device, AudioClientShareMode.Shared, true, 100);
+        _output = new WasapiOut(device, AudioClientShareMode.Shared, true, ChooseLatencyMs(device));
         _output.Init(_volumeProvider);
         _output.Play();
     }
 
-    public void Feed(byte[] data, int bytesRecorded) => _buffer.AddSamples(data, 0, bytesRecorded);
+    /// <summary>
+    /// Sizes the WASAPI render buffer from what the device's own driver reports it needs, rather
+    /// than guessing from the device's name.
+    ///
+    /// This replaced a fixed 100ms buffer for everything, and then a name-based
+    /// "Bluetooth gets 100ms, everything else gets 10ms" split. The name heuristic turned out
+    /// to be unreliable in exactly the case it mattered: AirPods enumerate as
+    /// "Headphones (AirPods Pro - ...)" with no "bluetooth" anywhere in the string, so a genuinely
+    /// wireless device was already being treated as wired — while the 100ms branch only ever
+    /// caught the Hands-Free telephony endpoints. Asking the driver for its own period sidesteps
+    /// the guessing: a device that needs more headroom reports a longer period and gets it.
+    ///
+    /// Clamped to a 10ms floor because requesting below the shared-mode period just gets clamped
+    /// by the audio engine anyway (measured: these endpoints report a 10ms period, with 3ms
+    /// available only in exclusive mode), and to a 100ms ceiling so a pathological driver can't
+    /// reintroduce the original latency problem.
+    /// </summary>
+    private static int ChooseLatencyMs(MMDevice device)
+    {
+        try
+        {
+            // DefaultDevicePeriod is in 100-nanosecond units.
+            var periodMs = device.AudioClient.DefaultDevicePeriod / 10000.0;
+            return (int)Math.Clamp(Math.Ceiling(periodMs), 10, 100);
+        }
+        catch
+        {
+            return 20; // Driver wouldn't say; pick a safe middle ground.
+        }
+    }
+
+    /// <summary>
+    /// Queues newly captured audio for this device. If the auto-sync balancer has scheduled a
+    /// trim (see <see cref="TrimBacklog"/>), some of the newest audio is quietly dropped here
+    /// instead — this is the only safe place to shrink this channel's queued backlog, since
+    /// WasapiOut's own playback thread is concurrently calling Read() on the same buffer from
+    /// the consumer side; dropping on the way in avoids racing that read.
+    /// </summary>
+    public void Feed(byte[] data, int bytesRecorded)
+    {
+        if (_pendingTrimBytes > 0)
+        {
+            var trimmed = Math.Min(_pendingTrimBytes, bytesRecorded);
+            _pendingTrimBytes -= trimmed;
+            if (trimmed >= bytesRecorded) return;
+            _buffer.AddSamples(data, trimmed, bytesRecorded - trimmed);
+            return;
+        }
+
+        _buffer.AddSamples(data, 0, bytesRecorded);
+    }
 
     public float Volume
     {
@@ -114,15 +165,28 @@ public sealed class OutputChannel : IDisposable
     public void Nudge(double deltaMs)
     {
         var bytesPerMs = _sourceFormat.AverageBytesPerSecond / 1000.0;
-        var deltaBytes = (int)(Math.Abs(deltaMs) * bytesPerMs);
+        var deltaBytes = (int)(deltaMs * bytesPerMs);
         deltaBytes -= deltaBytes % _sourceFormat.BlockAlign;
         if (deltaBytes <= 0) return;
 
         var scratch = new byte[deltaBytes];
-        if (deltaMs > 0)
-            _buffer.AddSamples(scratch, 0, deltaBytes);
-        else
-            _buffer.Read(scratch, 0, deltaBytes);
+        _buffer.AddSamples(scratch, 0, deltaBytes);
+    }
+
+    /// <summary>
+    /// Shrinks this channel's queued backlog by dropping upcoming captured audio at the feed
+    /// side rather than reading it back out of the buffer — used by the auto-sync balancer to
+    /// pull a device that's fallen behind (built up more queued audio than the others) back
+    /// toward the pack, without racing WasapiOut's own concurrent reads from the same buffer.
+    /// </summary>
+    public void TrimBacklog(double deltaMs)
+    {
+        var bytesPerMs = _sourceFormat.AverageBytesPerSecond / 1000.0;
+        var deltaBytes = (int)(deltaMs * bytesPerMs);
+        deltaBytes -= deltaBytes % _sourceFormat.BlockAlign;
+        if (deltaBytes <= 0) return;
+
+        _pendingTrimBytes += deltaBytes;
     }
 
     public void Dispose()

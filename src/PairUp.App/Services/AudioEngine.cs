@@ -102,10 +102,20 @@ public sealed class AudioEngine : IDisposable
 
     /// <summary>
     /// Runs continuously while 2+ devices are connected: keeps every channel's buffered
-    /// duration converged toward the group's laziest channel, smoothly correcting the
-    /// clock-drift that otherwise pulls independently-clocked output devices out of sync
-    /// over time. Only ever adds silence (never trims), since trimming would require reading
-    /// from the same buffer WasapiOut's playback thread is concurrently consuming from.
+    /// duration converged toward the group's fastest (least backlogged) channel, smoothly
+    /// correcting the clock-drift that otherwise pulls independently-clocked output devices
+    /// out of sync over time.
+    ///
+    /// Converges toward the minimum, not the maximum: a device with more inherent buffering
+    /// (e.g. a Bluetooth speaker with a larger driver/codec queue) naturally sits at a higher
+    /// BufferedDuration than the rest. Converging everyone else up to match it — the previous
+    /// behavior — forced every other device to accumulate extra artificial delay just to equal
+    /// the laziest device in the group, and since that correction only ever added silence and
+    /// never removed it, the group's baseline latency could only ratchet upward over a session,
+    /// getting worse the more devices (and thus the more chances for one outlier) were added.
+    /// Converging down to the fastest device instead trims the backlogged outlier toward the
+    /// pack via OutputChannel.TrimBacklog (safe: drops upcoming input at the feed side rather
+    /// than reading back out of the buffer WasapiOut's thread is concurrently consuming from).
     /// </summary>
     private void RebalanceChannels()
     {
@@ -115,16 +125,18 @@ public sealed class AudioEngine : IDisposable
         {
             if (_channels.Count < 2) return;
 
-            var target = _channels.Values.Max(c => c.BufferedDuration.TotalMilliseconds);
+            var target = _channels.Values.Min(c => c.BufferedDuration.TotalMilliseconds);
             statuses = new List<SyncStatus>(_channels.Count);
 
             foreach (var (deviceId, channel) in _channels)
             {
                 var diff = target - channel.BufferedDuration.TotalMilliseconds;
-                if (diff >= SyncDeadZoneMs)
+                if (diff <= -SyncDeadZoneMs)
+                    channel.TrimBacklog(Math.Min(-diff, SyncMaxStepMs));
+                else if (diff >= SyncDeadZoneMs)
                     channel.Nudge(Math.Min(diff, SyncMaxStepMs));
 
-                var isReference = channel.BufferedDuration.TotalMilliseconds >= target - 0.5;
+                var isReference = channel.BufferedDuration.TotalMilliseconds <= target + 0.5;
                 statuses.Add(new SyncStatus(deviceId, -diff, isReference));
             }
         }
